@@ -1,0 +1,16 @@
+[package]
+name = "twitch_gql"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hyper = { version = "0.14.16", features = ["client",  "http2", "http1", "tcp"] }
+hyper-tls = "0.5.0"
+futures = { version = "0.3.19", features = ["compat"] }
+tokio = { version = "1.15.0", features = ["full"] }
+dotenv = "0.13.0"
+log = "0.4.5"
+env_logger = "0.6.0"
+serde = "1.0.81"
+serde_json = "1.0.33"
+serde_derive = "1.0.81"
