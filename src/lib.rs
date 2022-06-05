@@ -1,5 +1,4 @@
 #![feature(backtrace)]
-#[macro_use]
 extern crate serde_json;
 
 use std::error::Error;
@@ -13,6 +12,7 @@ use serde_json::Value;
 use hyper::client::{Client as HyperClient, HttpConnector};
 use hyper::body::Body;
 use hyper_tls::HttpsConnector;
+use log::trace;
 
 pub struct TwitchGqlClient {
     pub client_id: String,
@@ -125,11 +125,14 @@ impl TwitchGqlClient {
             .uri(self.base_url.clone())
             .body(Body::from(s))?;
 
+        trace!("{:?}", req);
         let res = self.hyper.request(req).await?;
         let (_head, body) = res.into_parts();
         let bytes = hyper::body::to_bytes(body).await?;
-        let maybe_error = serde_json::from_slice::<GqlError>(bytes.as_ref());
+        
+        trace!("{:?}", std::str::from_utf8(bytes.as_ref()));
 
+        let maybe_error = serde_json::from_slice::<GqlError>(bytes.as_ref());
         if let Ok(err) = maybe_error {
             return Err(Box::new(err));
         }
