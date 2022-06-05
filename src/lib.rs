@@ -53,7 +53,7 @@ pub struct ApiResponse<T> {
 pub struct Clip {
     pub id: String,
     #[serde(rename = "videoOffsetSeconds")]
-    pub video_offset_seconds: i32,
+    pub video_offset_seconds: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
