@@ -115,21 +115,39 @@ impl TwitchGqlClient {
         }
     }
 
-    pub async fn send_request(&self, request: GqlRequestBuilder) -> Result<Value, Box<dyn Error>> {
+    pub async fn send_request(&self, request: GqlRequestBuilder) -> Result<Value, Box<dyn Error + Send>> {
 
-        let s = serde_json::to_string(&Value::Array(request.requests))?;
+        let s = serde_json::to_string(&Value::Array(request.requests));
+        //TODO: Not sure why I need to box theses..
+        if let Err(err) = s {
+            return Err(Box::new(err));
+        }
+        let s = s.unwrap();
 
         let req = Request::builder()
             .method(Method::POST)
             .header("Client-Id", &self.client_id)
             .header("Content-Type", "text/plain;charset=UTF-8")
             .uri(self.base_url.clone())
-            .body(Body::from(s))?;
+            .body(Body::from(s));
+        if let Err(err) = req {
+            return Err(Box::new(err));
+        }
+        let req = req.unwrap();
 
         trace!("{:?}", req);
-        let res = self.hyper.request(req).await?;
+        let res = self.hyper.request(req).await;
+        if let Err(err) = res {
+            return Err(Box::new(err));
+        }
+        let res = res.unwrap();
+        
         let (_head, body) = res.into_parts();
-        let bytes = hyper::body::to_bytes(body).await?;
+        let bytes = hyper::body::to_bytes(body).await;
+        if let Err(err) = bytes {
+            return Err(Box::new(err));
+        }
+        let bytes = bytes.unwrap();
         
         trace!("{:?}", _head);
         trace!("{:?}", std::str::from_utf8(bytes.as_ref()));
@@ -139,7 +157,11 @@ impl TwitchGqlClient {
             return Err(Box::new(err));
         }
 
-        let res = serde_json::from_slice(bytes.as_ref())?;
+        let res = serde_json::from_slice(bytes.as_ref());
+        if let Err(err) = res {
+            return Err(Box::new(err));
+        }
+        let res = res.unwrap();
         Ok(res)
     }
 
