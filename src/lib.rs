@@ -14,6 +14,7 @@ use hyper::body::Body;
 use hyper_tls::HttpsConnector;
 use log::trace;
 
+#[derive(Clone)]
 pub struct TwitchGqlClient {
     pub client_id: String,
     pub client_secret: Option<String>,
@@ -130,6 +131,7 @@ impl TwitchGqlClient {
         let (_head, body) = res.into_parts();
         let bytes = hyper::body::to_bytes(body).await?;
         
+        trace!("{:?}", _head);
         trace!("{:?}", std::str::from_utf8(bytes.as_ref()));
 
         let maybe_error = serde_json::from_slice::<GqlError>(bytes.as_ref());
