@@ -59,7 +59,7 @@ pub struct Clip {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ClipsFullVideoButton {
-    pub clip: Clip,
+    pub clip: Option<Clip>,
 }
 
 impl Display for GqlError {
@@ -115,39 +115,22 @@ impl TwitchGqlClient {
         }
     }
 
-    pub async fn send_request(&self, request: GqlRequestBuilder) -> Result<Value, Box<dyn Error + Send>> {
+    pub async fn send_request(&self, request: GqlRequestBuilder) -> Result<Value, Box<dyn Error + Send + Sync>> {
 
-        let s = serde_json::to_string(&Value::Array(request.requests));
-        //TODO: Not sure why I need to box theses..
-        if let Err(err) = s {
-            return Err(Box::new(err));
-        }
-        let s = s.unwrap();
+        let s = serde_json::to_string(&Value::Array(request.requests))?;
 
         let req = Request::builder()
             .method(Method::POST)
             .header("Client-Id", &self.client_id)
             .header("Content-Type", "text/plain;charset=UTF-8")
             .uri(self.base_url.clone())
-            .body(Body::from(s));
-        if let Err(err) = req {
-            return Err(Box::new(err));
-        }
-        let req = req.unwrap();
+            .body(Body::from(s))?;
 
         trace!("{:?}", req);
-        let res = self.hyper.request(req).await;
-        if let Err(err) = res {
-            return Err(Box::new(err));
-        }
-        let res = res.unwrap();
+        let res = self.hyper.request(req).await?;
         
         let (_head, body) = res.into_parts();
-        let bytes = hyper::body::to_bytes(body).await;
-        if let Err(err) = bytes {
-            return Err(Box::new(err));
-        }
-        let bytes = bytes.unwrap();
+        let bytes = hyper::body::to_bytes(body).await?;
         
         trace!("{:?}", _head);
         trace!("{:?}", std::str::from_utf8(bytes.as_ref()));
@@ -157,11 +140,8 @@ impl TwitchGqlClient {
             return Err(Box::new(err));
         }
 
-        let res = serde_json::from_slice(bytes.as_ref());
-        if let Err(err) = res {
-            return Err(Box::new(err));
-        }
-        let res = res.unwrap();
+        let res = serde_json::from_slice(bytes.as_ref())?;
+
         Ok(res)
     }
 
