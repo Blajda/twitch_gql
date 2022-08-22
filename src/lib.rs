@@ -74,10 +74,6 @@ impl Error for GqlError {
         None
     }
 
-    fn backtrace(&self) -> Option<&std::backtrace::Backtrace> {
-        None
-    }
-
     fn description(&self) -> &str {
         "description() is deprecated; use Display"
     }
